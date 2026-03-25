@@ -17,7 +17,41 @@ curl -sfL https://raw.githubusercontent.com/LJTian/notion-linux/main/install.sh 
 curl -sfL https://raw.githubusercontent.com/LJTian/notion-linux/main/install.sh | NOTION_LINUX_VERSION=v1.0.0-20260325-120000 bash
 ```
 
-本地已有压缩包时，与 `install.sh` 同目录放置 `notion-linux-*.tar.xz`（或 `.tar.gz`）后执行 `./install.sh`，或 `./install.sh /path/to/包`。
+## 中国大陆安装方式（推荐）
+网络不稳定时，建议先在浏览器打开 Releases 页面下载压缩包：  
+<https://github.com/LJTian/notion-linux/releases/latest>
+
+下载后在文件所在目录执行（`x64/arm64` 按实际文件名替换；安装到 `/opt/notion` 需要 sudo 权限）：
+
+Shell 命令（依次执行）：
+```shell
+$ tmp="$(mktemp -d)" && tar -xJf ./notion-linux-x64.tar.xz -C "$tmp" && sudo rm -rf /opt/notion/share/notion-linux && sudo mkdir -p /opt/notion/share/notion-linux /opt/notion/bin && sudo cp -a "$tmp"/Notion-Linux-linux-x64/. /opt/notion/share/notion-linux/ && sudo ln -sf ../share/notion-linux/Notion-Linux /opt/notion/bin/notion-linux && rm -rf "$tmp"
+```
+### 运行
+```shell
+nohup notion-linux >/tmp/notion-linux.log 2>&1 &
+```
+
+### 桌面图标（应用菜单）
+使用解压并复制后的应用目录图标（`/opt/notion/share/notion-linux/resources/app/icon.png`），执行：
+
+```shell
+$ mkdir -p ~/.local/share/applications
+$ cat > ~/.local/share/applications/notion-linux.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Notion Linux
+Comment=Notion desktop wrapper
+Exec=notion-linux
+Icon=/opt/notion/share/notion-linux/resources/app/icon.png
+Terminal=false
+Categories=Office;Productivity;
+StartupNotify=true
+EOF
+$ update-desktop-database ~/.local/share/applications 2>/dev/null || true
+```
+
+安装后可在应用菜单搜索 `Notion Linux` 启动。
 
 ## 本地构建
 
@@ -25,22 +59,6 @@ curl -sfL https://raw.githubusercontent.com/LJTian/notion-linux/main/install.sh 
 
 - `make dist-linux` — 默认 x64，产出 `notion-linux-x64.tar.xz`
 - `make dist-linux LINUX_ARCH=arm64` — 产出 `notion-linux-arm64.tar.xz`
-
-存在根目录 **`notion.png`** 时会作为应用图标传入 Nativefier。
-
-## CI
-
-| Workflow | 说明 |
-|----------|------|
-| **Build Linux** | 推 `main`/`master` 或 PR 时并行构建 x64、arm64，**Artifacts** 可下载。 |
-| **Release** | 发布正式附件到 **GitHub Releases**（`install.sh` 的 `latest/download` 依赖此处的包）。 |
-
-### 发布与标签
-
-- **推送已有标签**（需匹配 `v*`，例如带日期时间）：  
-  `git tag v1.0.0-20260325-120000 && git push origin v1.0.0-20260325-120000`  
-  会触发 **Release**，上传 `notion-linux-x64.tar.xz` / `notion-linux-arm64.tar.xz`。
-- **手动发布**：Actions → **Release** → Run workflow，填写 **`base_version`**（默认 `v1.0.0`）。工作流会生成 **`v1.0.0-UTC日期时间`**（格式 `YYYYMMDD-HHMMSS`）的新标签并推送，再创建/更新对应 Release。
 
 ## 免责声明
 
