@@ -1,0 +1,9 @@
+# Nativefier 输出目录
+Notion-Linux-*
+
+# 可选图标（若你自行添加）
+# notion.png
+
+# 分发压缩包
+*.tar.gz
+*.tgz

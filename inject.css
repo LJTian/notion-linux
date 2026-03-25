@@ -1,0 +1,4 @@
+/* 隐藏 Notion 网页版顶部的冗余间距，更像桌面客户端 */
+.notion-topbar {
+  -webkit-app-region: drag;
+}
