@@ -1,0 +1,42 @@
+# 在 Ubuntu 上交叉打包 Linux x64 / arm64（Electron 预编译二进制）
+name: Build Linux
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-linux-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dist-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install nativefier
+        run: npm install -g nativefier
+
+      - name: make dist-linux
+        run: make dist-linux LINUX_ARCH=${{ matrix.arch }}
+
+      - name: Upload tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: notion-linux-${{ matrix.arch }}
+          path: notion-linux-${{ matrix.arch }}.tar.xz
+          if-no-files-found: error

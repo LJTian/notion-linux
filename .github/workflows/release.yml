@@ -1,0 +1,28 @@
+# 推送 v* 标签：构建 x64 + arm64，上传 Release（install.sh 从 latest/download 拉取）
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install -g nativefier
+      - run: make dist-linux LINUX_ARCH=x64
+      - run: make dist-linux LINUX_ARCH=arm64
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            notion-linux-x64.tar.xz
+            notion-linux-arm64.tar.xz
+          generate_release_notes: true

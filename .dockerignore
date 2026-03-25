@@ -1,6 +1,0 @@
-.git
-Notion-Linux-*
-*.tar.gz
-*.tgz
-Dockerfile
-.dockerignore
