@@ -1,7 +1,9 @@
 # Notion 网页封装：在 macOS 上可分别打出 Linux / macOS 包（需已安装 nativefier：npm i -g nativefier）
 APP_NAME := Notion-Linux
 URL := https://www.notion.so
-INTERNAL_URLS := .*notion\.so.*
+# 仅 notion.so 时，Google OAuth 的 oauth2.googleapis.com / googleusercontent、营销站 notion.com、
+# 公开页 notion.site、国内微信登录等会被当成外链，从而在系统浏览器打开，表现为「一登录就跳出」。
+INTERNAL_URLS := .*([a-zA-Z0-9-]+\.notion\.site|notion\.(so|com|site)|oauth2\.googleapis\.com|googleusercontent\.com|accounts\.google\.|appleid\.apple\.com|idmsa\.apple\.com|login\.microsoftonline\.|login\.live\.|open\.weixin\.qq\.com|work\.weixin\.qq\.com|github\.com/(login|session|auth/oauth)).*
 NATIVEFIER ?= nativefier
 
 # 国内 Electron 镜像（npmmirror）。USE_CN=1 时启用，并用 env -u 去掉当前 shell 里的代理变量，避免「代理 + 国内源」混用导致下载失败
