@@ -1,28 +1,65 @@
-# 推送 v* 标签：构建 x64 + arm64，上传 Release（install.sh 从 latest/download 拉取）
+# 发布：打 v* 标签自动发布；也可手动按 v1.0.0-日期时间 生成标签并发布
 name: Release
 
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      base_version:
+        description: "版本前缀（如 v1.0.0）"
+        required: false
+        default: "v1.0.0"
+        type: string
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release tag
+        id: tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${{ github.ref_name }}"
+          else
+            BASE="${{ github.event.inputs.base_version }}"
+            TS="$(date -u +'%Y%m%d-%H%M%S')"
+            TAG="${BASE}-${TS}"
+            git tag "${TAG}"
+            git push origin "${TAG}"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - run: npm install -g nativefier
-      - run: make dist-linux LINUX_ARCH=x64
-      - run: make dist-linux LINUX_ARCH=arm64
-      - uses: softprops/action-gh-release@v2
+
+      - name: Install nativefier
+        run: npm install -g nativefier
+
+      - name: Build x64
+        run: make dist-linux LINUX_ARCH=x64
+
+      - name: Build arm64
+        run: make dist-linux LINUX_ARCH=arm64
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.tag.outputs.tag }}
           files: |
             notion-linux-x64.tar.xz
             notion-linux-arm64.tar.xz
           generate_release_notes: true
+          fail_on_unmatched_files: true

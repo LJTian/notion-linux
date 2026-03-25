@@ -1,19 +1,46 @@
 # Notion-Linux
 
-用 [Nativefier](https://github.com/nativefier/nativefier) 把 Notion 网页包成 Linux 应用（x64 / arm64）。开源供学习与非商业试用。
+用 [Nativefier](https://github.com/nativefier/nativefier) 把 Notion 网页包成 **Linux** 应用（**x64** / **arm64**）。开源供学习与非商业使用。
 
-**一条命令安装**（从 GitHub Releases 下载与本机架构匹配的包；默认仓库 `LJTian/notion-linux`，可 fork 后改 `NOTION_LINUX_REPO`）：
+## 一条命令安装
+
+默认从仓库 **`LJTian/notion-linux`** 的 **GitHub Releases** 拉取与本机架构匹配的 `notion-linux-*.tar.xz`：
 
 ```bash
 curl -sfL https://raw.githubusercontent.com/LJTian/notion-linux/main/install.sh | bash
 ```
 
-固定版本：`curl -sfL https://raw.githubusercontent.com/LJTian/notion-linux/main/install.sh | NOTION_LINUX_VERSION=v1.0.0 bash`
+- Fork 后请把 URL 里的 `LJTian/notion-linux` 改成你的 **`用户/仓库`**，或设置环境变量：`NOTION_LINUX_REPO=用户/仓库`。
+- 安装指定版本（Release 标签名，如 `v1.0.0` 或 `v1.0.0-20260325-120000`）：
 
-**构建**：`npm i -g nativefier` 后执行 `make linux` 或 `make dist-linux`（默认 x64；arm64 加 `LINUX_ARCH=arm64`），产物为 `notion-linux-*.tar.xz`。
+```bash
+curl -sfL https://raw.githubusercontent.com/LJTian/notion-linux/main/install.sh | NOTION_LINUX_VERSION=v1.0.0-20260325-120000 bash
+```
 
-**本地已有压缩包**：与 `install.sh` 同目录放 `notion-linux-*.tar.xz`（或 `.tar.gz`）后执行 `./install.sh`，或 `./install.sh /path/to/包`。
+本地已有压缩包时，与 `install.sh` 同目录放置 `notion-linux-*.tar.xz`（或 `.tar.gz`）后执行 `./install.sh`，或 `./install.sh /path/to/包`。
 
+## 本地构建
+
+需 **Node.js** 与 `npm i -g nativefier`：
+
+- `make dist-linux` — 默认 x64，产出 `notion-linux-x64.tar.xz`
+- `make dist-linux LINUX_ARCH=arm64` — 产出 `notion-linux-arm64.tar.xz`
+
+存在根目录 **`notion.png`** 时会作为应用图标传入 Nativefier。
+
+## CI
+
+| Workflow | 说明 |
+|----------|------|
+| **Build Linux** | 推 `main`/`master` 或 PR 时并行构建 x64、arm64，**Artifacts** 可下载。 |
+| **Release** | 发布正式附件到 **GitHub Releases**（`install.sh` 的 `latest/download` 依赖此处的包）。 |
+
+### 发布与标签
+
+- **推送已有标签**（需匹配 `v*`，例如带日期时间）：  
+  `git tag v1.0.0-20260325-120000 && git push origin v1.0.0-20260325-120000`  
+  会触发 **Release**，上传 `notion-linux-x64.tar.xz` / `notion-linux-arm64.tar.xz`。
+- **手动发布**：Actions → **Release** → Run workflow，填写 **`base_version`**（默认 `v1.0.0`）。工作流会生成 **`v1.0.0-UTC日期时间`**（格式 `YYYYMMDD-HHMMSS`）的新标签并推送，再创建/更新对应 Release。
 
 ## 免责声明
 
