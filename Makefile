@@ -36,7 +36,7 @@ COMMON_FLAGS := \
 	--single-instance \
 	--tray
 
-.PHONY: all linux mac dist-linux dist-linux-cn clean help check
+.PHONY: all linux mac dist-linux dist-linux-cn docker-dist docker-dist-international clean help check
 
 help:
 	@echo "Targets:"
@@ -45,6 +45,8 @@ help:
 	@echo "  make all        - 依次打 Linux 与 macOS"
 	@echo "  make dist-linux    - 将 Linux 目录打成 notion-linux.tar.gz（便于传输保留权限）"
 	@echo "  make dist-linux-cn - 同上，Electron 走国内镜像并清除代理环境变量（推荐）"
+	@echo "  make docker-dist   - 用 Docker 打 dist-linux-cn，产物 notion-linux.tar.gz 拷到当前目录（需 docker）"
+	@echo "  make docker-dist-international - 同上但走默认 Electron 源（build-arg DIST_TARGET=dist-linux）"
 	@echo "  make linux USE_CN=1 / mac USE_CN=1 - 单平台 + 国内源、无代理"
 	@echo "  make clean      - 删除 Nativefier 输出与 tar.gz"
 	@echo "依赖: npm i -g nativefier"
@@ -67,6 +69,23 @@ dist-linux: linux
 
 dist-linux-cn:
 	@$(MAKE) dist-linux USE_CN=1
+
+# 容器内打包：固定 Node 20 + nativefier，避免宿主机 Node 过旧或全局 npm 权限问题
+DOCKER_IMAGE ?= notion-linux-pack:local
+
+docker-dist:
+	docker build -t $(DOCKER_IMAGE) -f Dockerfile .
+	@cid=$$(docker create $(DOCKER_IMAGE)); \
+	docker cp $$cid:/build/notion-linux.tar.gz ./notion-linux.tar.gz; \
+	docker rm -v $$cid
+	@echo "已生成 ./notion-linux.tar.gz（来自容器 $(DOCKER_IMAGE)）"
+
+docker-dist-international:
+	docker build -t $(DOCKER_IMAGE) -f Dockerfile --build-arg DIST_TARGET=dist-linux .
+	@cid=$$(docker create $(DOCKER_IMAGE)); \
+	docker cp $$cid:/build/notion-linux.tar.gz ./notion-linux.tar.gz; \
+	docker rm -v $$cid
+	@echo "已生成 ./notion-linux.tar.gz（来自容器 $(DOCKER_IMAGE)，默认 Electron 源）"
 
 clean:
 	rm -rf $(APP_NAME)-linux-* $(APP_NAME)-darwin-* notion-linux.tar.gz
