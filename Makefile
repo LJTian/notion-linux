@@ -29,3 +29,6 @@ linux: check
 
 dist-linux: linux
 	tar -cJf "$(TAR_NAME)" -C . "$(LINUX_OUT)"
+release:
+	git tag -a v$(VERSION) -m "Release v$(VERSION)"
+	git push origin v$(VERSION)
