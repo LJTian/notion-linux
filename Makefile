@@ -26,6 +26,10 @@ check:
 
 linux: check
 	$(NATIVEFIER) "$(URL)" --platform $(LINUX_PLATFORM) --arch $(LINUX_ARCH) $(COMMON_FLAGS)
+	@# 强制把图标放到 nativefier/Linux 输出目录中，避免桌面 Icon 指向的路径不存在
+	@if [ -f notion.png ]; then \
+		mkdir -p "$(LINUX_OUT)/resources/app" && cp -f notion.png "$(LINUX_OUT)/resources/app/icon.png"; \
+	fi
 
 dist-linux: linux
 	tar -cJf "$(TAR_NAME)" -C . "$(LINUX_OUT)"
