@@ -25,7 +25,13 @@ curl -sfL https://raw.githubusercontent.com/LJTian/notion-linux/main/install.sh 
 
 Shell 命令（依次执行）：
 ```shell
-$ tmp="$(mktemp -d)" && tar -xJf ./notion-linux-x64.tar.xz -C "$tmp" && sudo rm -rf /opt/notion/share/notion-linux && sudo mkdir -p /opt/notion/share/notion-linux /opt/notion/bin && sudo cp -a "$tmp"/Notion-Linux-linux-x64/. /opt/notion/share/notion-linux/ && sudo ln -sf ../share/notion-linux/Notion-Linux /opt/notion/bin/notion-linux && rm -rf "$tmp"
+$ tmp="$(mktemp -d)" && \
+ tar -xJf ./notion-linux-x64.tar.xz -C "$tmp" && \
+ sudo rm -rf /opt/notion/share/notion-linux && \
+ sudo mkdir -p /opt/notion/share/notion-linux /opt/notion/bin && \
+ sudo cp -a "$tmp"/Notion-Linux-linux-x64/. /opt/notion/share/notion-linux/ && \
+ sudo ln -sf ../share/notion-linux/Notion-Linux /opt/notion/bin/notion-linux && \
+ rm -rf "$tmp"
 ```
 ### 运行
 ```shell
