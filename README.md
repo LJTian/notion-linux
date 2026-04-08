@@ -59,6 +59,28 @@ $ update-desktop-database ~/.local/share/applications 2>/dev/null || true
 
 安装后可在应用菜单搜索 `Notion Linux` 启动。
 
+## GPU / 显卡相关问题
+
+部分环境（如较旧的 Mesa、虚拟机显卡、或某些 Intel/AMD 驱动与 Chromium/Electron 的 OpenGL/ANGLE 组合）下，启动时终端或日志里可能出现 **Skia shader compilation error**、**link failed but did not provide an info log**，着色器源码里带有 **`GL_NV_shader_noperspective_interpolation`**。这是 **Chromium 内置 Skia** 在 GPU 上编译管线着色器失败，与本仓库网页封装逻辑无关。
+
+**处理方式（任选其一验证）：**
+
+- 关闭 GPU 加速（多数情况下可立即恢复可用，代价是占用更多 CPU、界面可能略卡）：
+
+  ```bash
+  notion-linux --disable-gpu
+  ```
+
+  若安装路径为 `/opt/notion/bin/notion-linux`，则：
+
+  ```bash
+  /opt/notion/bin/notion-linux --disable-gpu
+  ```
+
+- 可先试较轻参数：`--disable-gpu-compositing`（若仍报错再改用 `--disable-gpu`）。
+
+- 长期使用：在桌面快捷方式 `Exec=` 中于可执行文件路径后追加上述参数；或升级本机 **Mesa / 显卡驱动** 后，再尝试去掉 `--disable-gpu` 以恢复硬件加速。
+
 ## 本地构建
 
 需 **Node.js** 与 `npm i -g nativefier`：
