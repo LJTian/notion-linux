@@ -49,7 +49,7 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --package-lock=false --registry=https://registry.npmjs.org
 
       - name: Build x64
         run: make dist-linux LINUX_ARCH=x64
