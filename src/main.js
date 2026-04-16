@@ -3,8 +3,8 @@ const fs = require("fs");
 const { app, BrowserWindow, BrowserView, Menu, Tray, nativeImage, ipcMain } = require("electron");
 
 const START_URL = "https://www.notion.com";
-const TAB_BAR_HEIGHT = 48;
-const CONTENT_PADDING = 4;
+const TAB_BAR_HEIGHT = 44;
+const CONTENT_PADDING = 0;
 const MIN_TAB_WIDTH = 120;
 const MAX_TAB_WIDTH = 220;
 
@@ -16,6 +16,7 @@ let mainWindow = null;
 let tray = null;
 let activeTabId = null;
 let tabSeq = 0;
+let isQuitting = false;
 const tabs = new Map();
 
 function normalizeTabTitle(rawTitle) {
@@ -164,6 +165,12 @@ function createMainWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, "renderer/index.html"));
+  mainWindow.on("close", (event) => {
+    if (!isQuitting) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+  });
   mainWindow.on("resize", updateViewBounds);
   mainWindow.on("closed", () => {
     mainWindow = null;
@@ -215,7 +222,10 @@ function createTray() {
       { type: "separator" },
       {
         label: "退出",
-        click: () => app.quit()
+        click: () => {
+          isQuitting = true;
+          app.quit();
+        }
       }
     ])
   );
@@ -246,5 +256,5 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+  if (isQuitting && process.platform !== "darwin") app.quit();
 });
