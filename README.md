@@ -88,6 +88,43 @@ $ update-desktop-database ~/.local/share/applications 2>/dev/null || true
 - `make dist-linux` — 默认 x64，产出 `notion-linux-x64.tar.xz`
 - `make dist-linux LINUX_ARCH=arm64` — 产出 `notion-linux-arm64.tar.xz`
 
+说明：构建参数已默认携带 `Chrome/140` 的 User-Agent，以兼容 Notion 新版最低浏览器版本校验。若需覆盖可用：
+
+```bash
+make dist-linux NOTION_USER_AGENT='Mozilla/5.0 ... Chrome/141.0.0.0 Safari/537.36'
+```
+
+同时默认固定 `Electron 38.2.0`（通过 Nativefier 的 `--electron-version`），避免不同环境下 Electron 漂移导致行为不一致。若需覆盖可用：
+
+```bash
+make dist-linux ELECTRON_VERSION=39.0.0
+```
+
+## 方案 A：Nativefier 外挂多窗口管理
+
+仓库内提供 `notion-linux-mux`（随打包产物一起分发），用于把多个 Notion 窗口当作“标签组”管理。
+
+常用命令：
+
+```bash
+# 打开一个命名窗口
+notion-linux-mux open work "https://www.notion.com"
+
+# 启动默认窗口组（home/inbox/docs）
+notion-linux-mux start-defaults
+
+# 查看当前追踪的窗口
+notion-linux-mux list
+
+# 关闭指定窗口
+notion-linux-mux stop work
+
+# 关闭全部窗口
+notion-linux-mux stop-all
+```
+
+说明：这不是 Electron 单窗口真标签，而是“多窗口管理层”。优点是稳定、可复用 Nativefier 打包链路。
+
 ## 免责声明
 
 - 本仓库**与 Notion 公司或其产品无关联、未获授权背书**；「Notion」及相关标识的商标与版权归权利人所有。

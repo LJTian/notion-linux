@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_BIN="${NOTION_LINUX_BIN:-notion-linux}"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/notion-linux-mux"
+RUNTIME_FILE="$STATE_DIR/windows.tsv"
+
+mkdir -p "$STATE_DIR"
+touch "$RUNTIME_FILE"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  notion-linux-mux open <name> <url>    Open a named window
+  notion-linux-mux start-defaults        Open default workspace windows
+  notion-linux-mux list                  List tracked windows
+  notion-linux-mux stop <name>           Stop one named window
+  notion-linux-mux stop-all              Stop all tracked windows
+
+Environment:
+  NOTION_LINUX_BIN   Nativefier app command (default: notion-linux)
+EOF
+}
+
+cleanup_dead() {
+  local tmp
+  tmp="$(mktemp)"
+  while IFS=$'\t' read -r name pid url; do
+    if [[ -n "${pid:-}" ]] && kill -0 "$pid" 2>/dev/null; then
+      printf "%s\t%s\t%s\n" "$name" "$pid" "$url" >>"$tmp"
+    fi
+  done <"$RUNTIME_FILE"
+  mv "$tmp" "$RUNTIME_FILE"
+}
+
+track_window() {
+  local name="$1" pid="$2" url="$3"
+  cleanup_dead
+  awk -F '\t' -v n="$name" '$1!=n {print $0}' "$RUNTIME_FILE" >"${RUNTIME_FILE}.tmp"
+  mv "${RUNTIME_FILE}.tmp" "$RUNTIME_FILE"
+  printf "%s\t%s\t%s\n" "$name" "$pid" "$url" >>"$RUNTIME_FILE"
+}
+
+open_window() {
+  local name="$1" url="$2"
+  cleanup_dead
+  nohup "$APP_BIN" "$url" >/tmp/notion-linux-"$name".log 2>&1 &
+  local pid="$!"
+  track_window "$name" "$pid" "$url"
+  echo "opened: $name ($pid) -> $url"
+}
+
+list_windows() {
+  cleanup_dead
+  if [[ ! -s "$RUNTIME_FILE" ]]; then
+    echo "no tracked windows"
+    return
+  fi
+  while IFS=$'\t' read -r name pid url; do
+    echo "$name  pid=$pid  url=$url"
+  done <"$RUNTIME_FILE"
+}
+
+stop_window() {
+  local name="$1"
+  cleanup_dead
+  local pid
+  pid="$(awk -F '\t' -v n="$name" '$1==n {print $2}' "$RUNTIME_FILE" | head -n1)"
+  if [[ -z "$pid" ]]; then
+    echo "window not found: $name" >&2
+    exit 1
+  fi
+  kill "$pid" 2>/dev/null || true
+  cleanup_dead
+  echo "stopped: $name ($pid)"
+}
+
+stop_all() {
+  cleanup_dead
+  while IFS=$'\t' read -r _name pid _url; do
+    kill "$pid" 2>/dev/null || true
+  done <"$RUNTIME_FILE"
+  : >"$RUNTIME_FILE"
+  echo "stopped all tracked windows"
+}
+
+start_defaults() {
+  open_window home "https://www.notion.com"
+  open_window inbox "https://www.notion.com"
+  open_window docs "https://www.notion.com"
+}
+
+cmd="${1:-}"
+case "$cmd" in
+  open)
+    [[ $# -eq 3 ]] || { usage; exit 1; }
+    open_window "$2" "$3"
+    ;;
+  start-defaults)
+    start_defaults
+    ;;
+  list)
+    list_windows
+    ;;
+  stop)
+    [[ $# -eq 2 ]] || { usage; exit 1; }
+    stop_window "$2"
+    ;;
+  stop-all)
+    stop_all
+    ;;
+  *)
+    usage
+    ;;
+esac
