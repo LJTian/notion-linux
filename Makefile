@@ -55,7 +55,7 @@ appimage: deps clean-appimage
 
 dist-appimage: appimage
 	@set -e; \
-	f="$$(ls -1 dist/*-$(LINUX_ARCH).AppImage 2>/dev/null | awk 'NR==1{print;exit}')"; \
+	f="$$(ls -1t dist/*.AppImage 2>/dev/null | awk 'NR==1{print;exit}')"; \
 	if [ -z "$$f" ]; then \
 		echo "未找到 AppImage 产物（架构 $(LINUX_ARCH)）" >&2; \
 		exit 1; \

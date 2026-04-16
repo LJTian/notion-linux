@@ -1,8 +1,10 @@
 const path = require("path");
-const { app, BrowserWindow, BrowserView, ipcMain } = require("electron");
+const fs = require("fs");
+const { app, BrowserWindow, BrowserView, Menu, Tray, nativeImage, ipcMain } = require("electron");
 
 const START_URL = "https://www.notion.com";
-const TAB_BAR_HEIGHT = 42;
+const TAB_BAR_HEIGHT = 48;
+const CONTENT_PADDING = 4;
 const MIN_TAB_WIDTH = 120;
 const MAX_TAB_WIDTH = 220;
 
@@ -11,9 +13,16 @@ const NOTION_USER_AGENT =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
 
 let mainWindow = null;
+let tray = null;
 let activeTabId = null;
 let tabSeq = 0;
 const tabs = new Map();
+
+function normalizeTabTitle(rawTitle) {
+  const title = (rawTitle || "").trim();
+  if (!title) return "Notion";
+  return title.replace(/\s*[|｜]\s*Notion\s*$/i, "").trim() || "Notion";
+}
 
 function tabSummary(tab) {
   return {
@@ -45,10 +54,10 @@ function updateViewBounds() {
 
   const [width, height] = mainWindow.getContentSize();
   tab.view.setBounds({
-    x: 0,
-    y: TAB_BAR_HEIGHT,
-    width,
-    height: Math.max(0, height - TAB_BAR_HEIGHT)
+    x: CONTENT_PADDING,
+    y: TAB_BAR_HEIGHT + CONTENT_PADDING,
+    width: Math.max(0, width - CONTENT_PADDING * 2),
+    height: Math.max(0, height - TAB_BAR_HEIGHT - CONTENT_PADDING * 2)
   });
   tab.view.setAutoResize({ width: true, height: true });
 }
@@ -75,7 +84,7 @@ function attachTabEvents(tab) {
   });
   wc.on("page-title-updated", (event, title) => {
     event.preventDefault();
-    tab.title = title || "Notion";
+    tab.title = normalizeTabTitle(title);
     sendState();
   });
   wc.on("did-navigate", (_event, url) => {
@@ -110,11 +119,7 @@ function createTab(url = START_URL) {
   view.webContents.setUserAgent(NOTION_USER_AGENT);
   view.webContents.loadURL(url);
 
-  if (!activeTabId) {
-    setActiveTab(id);
-  } else {
-    sendState();
-  }
+  setActiveTab(id);
 }
 
 function closeTab(tabId) {
@@ -150,6 +155,7 @@ function createMainWindow() {
     title: "Notion Linux",
     backgroundColor: "#eceae5",
     autoHideMenuBar: true,
+    roundedCorners: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -168,6 +174,58 @@ function createMainWindow() {
   createTab(START_URL);
 }
 
+function resolveTrayIcon() {
+  const candidates = [
+    path.join(__dirname, "..", "notion.png"),
+    path.join(process.resourcesPath || "", "app", "notion.png")
+  ];
+  for (const p of candidates) {
+    if (p && fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
+function createTray() {
+  const iconPath = resolveTrayIcon();
+  if (!iconPath || tray) return;
+
+  let icon = nativeImage.createFromPath(iconPath);
+  if (!icon.isEmpty()) {
+    icon = icon.resize({ width: 16, height: 16 });
+  }
+
+  tray = new Tray(icon);
+  tray.setToolTip("Notion Linux");
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      {
+        label: "显示主窗口",
+        click: () => {
+          if (!mainWindow || mainWindow.isDestroyed()) return;
+          mainWindow.show();
+          mainWindow.focus();
+        }
+      },
+      {
+        label: "新建标签",
+        click: () => {
+          createTab(START_URL);
+        }
+      },
+      { type: "separator" },
+      {
+        label: "退出",
+        click: () => app.quit()
+      }
+    ])
+  );
+  tray.on("click", () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    mainWindow.show();
+    mainWindow.focus();
+  });
+}
+
 ipcMain.handle("tabs:get-state", async () => currentState());
 ipcMain.handle("tabs:create", async (_event, url) => {
   createTab(url || START_URL);
@@ -182,7 +240,10 @@ ipcMain.handle("tabs:close", async (_event, tabId) => {
   return currentState();
 });
 
-app.whenReady().then(createMainWindow);
+app.whenReady().then(() => {
+  createMainWindow();
+  createTray();
+});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();

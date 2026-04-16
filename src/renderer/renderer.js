@@ -1,5 +1,6 @@
 const tabsEl = document.getElementById("tabs");
 const newTabBtn = document.getElementById("newTabBtn");
+const quickNewTabBtn = document.getElementById("quickNewTabBtn");
 
 function renderTabs(state) {
   tabsEl.innerHTML = "";
@@ -37,6 +38,10 @@ function renderTabs(state) {
 }
 
 newTabBtn.addEventListener("click", async () => {
+  await window.tabsApi.create();
+});
+
+quickNewTabBtn.addEventListener("click", async () => {
   await window.tabsApi.create();
 });
 
