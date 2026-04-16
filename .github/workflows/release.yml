@@ -57,6 +57,12 @@ jobs:
       - name: Build arm64
         run: make dist-linux LINUX_ARCH=arm64
 
+      - name: Build AppImage x64
+        run: make dist-appimage LINUX_ARCH=x64
+
+      - name: Build AppImage arm64
+        run: make dist-appimage LINUX_ARCH=arm64
+
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -64,5 +70,7 @@ jobs:
           files: |
             notion-linux-x64.tar.xz
             notion-linux-arm64.tar.xz
+            notion-linux-x64.AppImage
+            notion-linux-arm64.AppImage
           generate_release_notes: true
           fail_on_unmatched_files: true

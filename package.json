@@ -7,10 +7,33 @@
   "scripts": {
     "dev": "electron .",
     "dist:linux:x64": "electron-packager . Notion-Linux --platform=linux --arch=x64 --electron-version=$ELECTRON_VERSION --out=. --overwrite --prune=true --icon=notion.png",
-    "dist:linux:arm64": "electron-packager . Notion-Linux --platform=linux --arch=arm64 --electron-version=$ELECTRON_VERSION --out=. --overwrite --prune=true --icon=notion.png"
+    "dist:linux:arm64": "electron-packager . Notion-Linux --platform=linux --arch=arm64 --electron-version=$ELECTRON_VERSION --out=. --overwrite --prune=true --icon=notion.png",
+    "dist:appimage:x64": "electron-builder --linux AppImage --x64 --publish never",
+    "dist:appimage:arm64": "electron-builder --linux AppImage --arm64 --publish never"
+  },
+  "build": {
+    "appId": "com.ljtian.notionlinux",
+    "productName": "Notion Linux",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "notion.png",
+      "inject.css",
+      "package.json"
+    ],
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "notion.png",
+      "category": "Office"
+    }
   },
   "devDependencies": {
     "electron": "38.2.0",
-    "electron-packager": "^17.1.2"
+    "electron-packager": "^17.1.2",
+    "electron-builder": "^24.13.3"
   }
 }

@@ -90,6 +90,8 @@ $ update-desktop-database ~/.local/share/applications 2>/dev/null || true
 
 - `make dist-linux` — 默认 x64，产出 `notion-linux-x64.tar.xz`
 - `make dist-linux LINUX_ARCH=arm64` — 产出 `notion-linux-arm64.tar.xz`
+- `make dist-appimage` — 默认 x64，产出 `notion-linux-x64.AppImage`
+- `make dist-appimage LINUX_ARCH=arm64` — 产出 `notion-linux-arm64.AppImage`
 
 说明：构建参数已默认携带 `Chrome/140` 的 User-Agent，以兼容 Notion 新版最低浏览器版本校验。若需覆盖可用：
 
@@ -101,6 +103,12 @@ make dist-linux NOTION_USER_AGENT='Mozilla/5.0 ... Chrome/141.0.0.0 Safari/537.3
 
 ```bash
 make dist-linux ELECTRON_VERSION=39.0.0
+```
+
+若仅打 AppImage（不生成 tar.xz）：
+
+```bash
+make dist-appimage
 ```
 
 ## 多标签能力

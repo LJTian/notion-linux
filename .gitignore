@@ -5,8 +5,10 @@ Notion-Linux-*
 node_modules/
 .npm-cache/
 .electron-cache/
+dist/
 
 # 分发压缩包
 *.tar.xz
 *.tar.gz
 *.tgz
+*.AppImage

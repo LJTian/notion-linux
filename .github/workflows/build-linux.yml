@@ -37,9 +37,19 @@ jobs:
       - name: make dist-linux
         run: make dist-linux LINUX_ARCH=${{ matrix.arch }}
 
+      - name: make dist-appimage
+        run: make dist-appimage LINUX_ARCH=${{ matrix.arch }}
+
       - name: Upload tarball
         uses: actions/upload-artifact@v4
         with:
           name: notion-linux-${{ matrix.arch }}
           path: notion-linux-${{ matrix.arch }}.tar.xz
+          if-no-files-found: error
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: notion-linux-${{ matrix.arch }}-appimage
+          path: notion-linux-${{ matrix.arch }}.AppImage
           if-no-files-found: error
