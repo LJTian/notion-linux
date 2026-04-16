@@ -1,0 +1,16 @@
+{
+  "name": "notion-linux",
+  "version": "1.2.0",
+  "description": "Notion Linux desktop wrapper with minimalist native tabs",
+  "main": "src/main.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "electron .",
+    "dist:linux:x64": "electron-packager . Notion-Linux --platform=linux --arch=x64 --electron-version=$ELECTRON_VERSION --out=. --overwrite --prune=true --icon=notion.png",
+    "dist:linux:arm64": "electron-packager . Notion-Linux --platform=linux --arch=arm64 --electron-version=$ELECTRON_VERSION --out=. --overwrite --prune=true --icon=notion.png"
+  },
+  "devDependencies": {
+    "electron": "38.2.0",
+    "electron-packager": "^17.1.2"
+  }
+}

@@ -1,9 +1,12 @@
-# Nativefier 输出目录
+# 打包输出目录
 Notion-Linux-*
 
-# 可选图标（若你自行添加）
-# notion.png
+# Node 依赖与缓存
+node_modules/
+.npm-cache/
+.electron-cache/
 
 # 分发压缩包
+*.tar.xz
 *.tar.gz
 *.tgz

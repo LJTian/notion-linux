@@ -48,8 +48,8 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install nativefier
-        run: npm install -g nativefier
+      - name: Install dependencies
+        run: npm ci
 
       - name: Build x64
         run: make dist-linux LINUX_ARCH=x64

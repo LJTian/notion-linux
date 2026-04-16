@@ -1,6 +1,6 @@
 # Notion-Linux
 
-用 [Nativefier](https://github.com/nativefier/nativefier) 把 Notion 网页包成 **Linux** 应用（**x64** / **arm64**）。开源供学习与非商业使用。
+基于自定义 **Electron** 壳封装 Notion，支持单窗口极简多标签（**x64** / **arm64**）。开源供学习与非商业使用。
 
 ## 一条命令安装
 
@@ -83,7 +83,10 @@ $ update-desktop-database ~/.local/share/applications 2>/dev/null || true
 
 ## 本地构建
 
-需 **Node.js** 与 `npm i -g nativefier`：
+需 **Node.js 20+**：
+
+- `npm install`
+- `npm run dev`
 
 - `make dist-linux` — 默认 x64，产出 `notion-linux-x64.tar.xz`
 - `make dist-linux LINUX_ARCH=arm64` — 产出 `notion-linux-arm64.tar.xz`
@@ -94,36 +97,24 @@ $ update-desktop-database ~/.local/share/applications 2>/dev/null || true
 make dist-linux NOTION_USER_AGENT='Mozilla/5.0 ... Chrome/141.0.0.0 Safari/537.36'
 ```
 
-同时默认固定 `Electron 38.2.0`（通过 Nativefier 的 `--electron-version`），避免不同环境下 Electron 漂移导致行为不一致。若需覆盖可用：
+同时默认固定 `Electron 38.2.0`（通过 `electron-packager --electron-version`），避免不同环境下 Electron 漂移导致行为不一致。若需覆盖可用：
 
 ```bash
 make dist-linux ELECTRON_VERSION=39.0.0
 ```
 
-## 方案 A：Nativefier 外挂多窗口管理
+## 多标签能力
 
-仓库内提供 `notion-linux-mux`（随打包产物一起分发），用于把多个 Notion 窗口当作“标签组”管理。
+- 单窗口真多标签（不是多窗口模拟）
+- 顶部极简标签栏（接近 `tab-sketch-a.html` 草图）
+- 支持新建、切换、关闭标签；启动时默认打开一个首页标签
 
-常用命令：
+## 中国大陆构建网络建议
 
 ```bash
-# 打开一个命名窗口
-notion-linux-mux open work "https://www.notion.com"
-
-# 启动默认窗口组（home/inbox/docs）
-notion-linux-mux start-defaults
-
-# 查看当前追踪的窗口
-notion-linux-mux list
-
-# 关闭指定窗口
-notion-linux-mux stop work
-
-# 关闭全部窗口
-notion-linux-mux stop-all
+npm install --registry=https://registry.npmmirror.com --electron_mirror=https://npmmirror.com/mirrors/electron/
+make dist-linux NPM_REGISTRY=https://registry.npmmirror.com ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
 ```
-
-说明：这不是 Electron 单窗口真标签，而是“多窗口管理层”。优点是稳定、可复用 Nativefier 打包链路。
 
 ## 免责声明
 

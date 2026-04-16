@@ -87,15 +87,8 @@ main() {
   cp -a "$appdir"/. "$DATADIR"/
   install -d "$BINDIR"
   ln -sf "../share/notion-linux/$APP_NAME" "$BINDIR/notion-linux"
-  if [[ -f "$DATADIR/notion-linux-mux" ]]; then
-    chmod +x "$DATADIR/notion-linux-mux"
-    ln -sf "../share/notion-linux/notion-linux-mux" "$BINDIR/notion-linux-mux"
-  fi
 
   echo "安装完成: $BINDIR/notion-linux" >&2
-  if [[ -f "$DATADIR/notion-linux-mux" ]]; then
-    echo "多窗口管理器: $BINDIR/notion-linux-mux" >&2
-  fi
   echo "请确认 $BINDIR 在 PATH 中" >&2
 }
 
