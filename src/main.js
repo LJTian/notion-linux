@@ -1,8 +1,8 @@
 const path = require("path");
 const fs = require("fs");
-const { app, BrowserWindow, BrowserView, Menu, Tray, nativeImage, ipcMain } = require("electron");
+const { app, BrowserWindow, BrowserView, Menu, Tray, nativeImage, ipcMain, shell } = require("electron");
+const { START_URL, classifyUrl } = require("./url-policy");
 
-const START_URL = "https://www.notion.com";
 const TAB_BAR_HEIGHT = 44;
 const CONTENT_PADDING = 0;
 const MIN_TAB_WIDTH = 120;
@@ -17,6 +17,7 @@ let tray = null;
 let activeTabId = null;
 let tabSeq = 0;
 let isQuitting = false;
+let injectCss = null;
 const tabs = new Map();
 
 function normalizeTabTitle(rawTitle) {
@@ -48,6 +49,74 @@ function sendState() {
   mainWindow.webContents.send("tabs:state", currentState());
 }
 
+function readInjectCss() {
+  if (injectCss !== null) return injectCss;
+
+  const candidates = [
+    path.join(__dirname, "..", "inject.css"),
+    path.join(process.resourcesPath || "", "app", "inject.css")
+  ];
+  for (const p of candidates) {
+    if (p && fs.existsSync(p)) {
+      injectCss = fs.readFileSync(p, "utf8");
+      return injectCss;
+    }
+  }
+
+  injectCss = "";
+  return injectCss;
+}
+
+async function injectNotionCss(tab) {
+  const css = readInjectCss();
+  if (!css) return;
+
+  const currentUrl = tab.view.webContents.getURL();
+  if (classifyUrl(currentUrl).action !== "notion") return;
+
+  try {
+    await tab.view.webContents.insertCSS(css);
+  } catch (error) {
+    console.warn("Failed to inject Notion CSS:", error.message);
+  }
+}
+
+async function openExternalUrl(url) {
+  try {
+    await shell.openExternal(url);
+  } catch (error) {
+    console.warn("Failed to open external URL:", error.message);
+  }
+}
+
+function getTabBaseUrl(tabId = activeTabId) {
+  const tab = tabs.get(tabId);
+  return tab?.url || START_URL;
+}
+
+function handleNavigationRequest(url = START_URL, options = {}) {
+  const { newTab = true, baseUrl = getTabBaseUrl() } = options;
+  const target = classifyUrl(url || START_URL, baseUrl);
+
+  if (target.action === "notion") {
+    if (newTab || !activeTabId) {
+      createTab(target.url);
+    } else {
+      const tab = tabs.get(activeTabId);
+      if (tab) {
+        tab.url = target.url;
+        tab.loading = true;
+        tab.view.webContents.loadURL(target.url);
+        sendState();
+      }
+    }
+  } else if (target.action === "external") {
+    openExternalUrl(target.url);
+  }
+
+  return target;
+}
+
 function updateViewBounds() {
   if (!mainWindow || !activeTabId) return;
   const tab = tabs.get(activeTabId);
@@ -75,6 +144,20 @@ function setActiveTab(tabId) {
 
 function attachTabEvents(tab) {
   const wc = tab.view.webContents;
+  wc.setWindowOpenHandler(({ url }) => {
+    handleNavigationRequest(url, {
+      newTab: true,
+      baseUrl: tab.url
+    });
+    return { action: "deny" };
+  });
+  wc.on("will-navigate", (event, url) => {
+    const target = classifyUrl(url, tab.url);
+    if (target.action === "notion") return;
+
+    event.preventDefault();
+    if (target.action === "external") openExternalUrl(target.url);
+  });
   wc.on("did-start-loading", () => {
     tab.loading = true;
     sendState();
@@ -96,9 +179,18 @@ function attachTabEvents(tab) {
     tab.url = url;
     sendState();
   });
+  wc.on("did-finish-load", () => {
+    injectNotionCss(tab);
+  });
 }
 
 function createTab(url = START_URL) {
+  const target = classifyUrl(url);
+  if (target.action !== "notion") {
+    if (target.action === "external") openExternalUrl(target.url);
+    return;
+  }
+
   const id = `tab-${++tabSeq}`;
   const view = new BrowserView({
     webPreferences: {
@@ -111,14 +203,14 @@ function createTab(url = START_URL) {
     id,
     view,
     title: "Notion",
-    url,
+    url: target.url,
     loading: true
   };
   tabs.set(id, tab);
   attachTabEvents(tab);
 
   view.webContents.setUserAgent(NOTION_USER_AGENT);
-  view.webContents.loadURL(url);
+  view.webContents.loadURL(target.url);
 
   setActiveTab(id);
 }
@@ -238,7 +330,7 @@ function createTray() {
 
 ipcMain.handle("tabs:get-state", async () => currentState());
 ipcMain.handle("tabs:create", async (_event, url) => {
-  createTab(url || START_URL);
+  handleNavigationRequest(url || START_URL, { newTab: true });
   return currentState();
 });
 ipcMain.handle("tabs:activate", async (_event, tabId) => {
