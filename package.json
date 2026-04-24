@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "electron .",
+    "check": "node test/url-policy.test.js",
     "dist:linux:x64": "electron-packager . Notion-Linux --platform=linux --arch=x64 --electron-version=$ELECTRON_VERSION --out=. --overwrite --prune=true --icon=notion.png",
     "dist:linux:arm64": "electron-packager . Notion-Linux --platform=linux --arch=arm64 --electron-version=$ELECTRON_VERSION --out=. --overwrite --prune=true --icon=notion.png",
     "dist:appimage:x64": "electron-builder --linux AppImage --x64 --publish never",
