@@ -3,6 +3,8 @@ const newTabBtn = document.getElementById("newTabBtn");
 const quickNewTabBtn = document.getElementById("quickNewTabBtn");
 
 function renderTabs(state) {
+  if (!state || !Array.isArray(state.tabs)) return;
+
   tabsEl.innerHTML = "";
   const fragment = document.createDocumentFragment();
 

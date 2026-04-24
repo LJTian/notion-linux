@@ -1,7 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const { app, BrowserWindow, BrowserView, Menu, Tray, nativeImage, ipcMain, shell } = require("electron");
-const { START_URL, classifyUrl } = require("./url-policy");
+const { START_URL, classifyUrl, selectTabIdByShortcut } = require("./url-policy");
 
 const TAB_BAR_HEIGHT = 44;
 const CONTENT_PADDING = 0;
@@ -142,8 +142,57 @@ function setActiveTab(tabId) {
   sendState();
 }
 
+function activateRelativeTab(offset) {
+  const tabIds = [...tabs.keys()];
+  if (tabIds.length === 0 || !activeTabId) return;
+
+  const currentIndex = tabIds.indexOf(activeTabId);
+  if (currentIndex === -1) return;
+
+  const nextIndex = (currentIndex + offset + tabIds.length) % tabIds.length;
+  setActiveTab(tabIds[nextIndex]);
+}
+
+function handleTabShortcut(input) {
+  if (!input.control && !input.meta) return false;
+  if (input.alt) return false;
+
+  const key = input.key;
+  if (key === "t" || key === "T") {
+    createTab(START_URL);
+    return true;
+  }
+
+  if (key === "w" || key === "W") {
+    closeTab(activeTabId);
+    return true;
+  }
+
+  if (key === "Tab") {
+    activateRelativeTab(input.shift ? -1 : 1);
+    return true;
+  }
+
+  const numericKey = Number.parseInt(key, 10);
+  if (Number.isInteger(numericKey)) {
+    const tabId = selectTabIdByShortcut([...tabs.values()].map(tabSummary), numericKey);
+    if (tabId) setActiveTab(tabId);
+    return Boolean(tabId);
+  }
+
+  return false;
+}
+
+function registerWebContentsShortcuts(webContents) {
+  webContents.on("before-input-event", (event, input) => {
+    if (input.type !== "keyDown") return;
+    if (handleTabShortcut(input)) event.preventDefault();
+  });
+}
+
 function attachTabEvents(tab) {
   const wc = tab.view.webContents;
+  registerWebContentsShortcuts(wc);
   wc.setWindowOpenHandler(({ url }) => {
     handleNavigationRequest(url, {
       newTab: true,
@@ -256,6 +305,7 @@ function createMainWindow() {
     }
   });
 
+  registerWebContentsShortcuts(mainWindow.webContents);
   mainWindow.loadFile(path.join(__dirname, "renderer/index.html"));
   mainWindow.on("close", (event) => {
     if (!isQuitting) {
