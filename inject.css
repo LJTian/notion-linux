@@ -1,4 +1,39 @@
-/* 隐藏 Notion 网页版顶部的冗余间距，更像桌面客户端 */
+/* Top bar drag region for the custom Electron tab shell */
 .notion-topbar {
   -webkit-app-region: drag;
+}
+
+.notion-topbar button,
+.notion-topbar input,
+.notion-topbar a,
+.notion-topbar [role="button"],
+.notion-collection_view_page-block,
+.notion-open-sidebar,
+.notion-page-block,
+.notion-selectable,
+.notion-topbar-share-menu,
+.notion-topbar-more-button {
+  -webkit-app-region: no-drag;
+}
+
+/*
+ * Keep layout inside the BrowserView width. Full-viewport (100vw) sizing
+ * shifts the centered page column to the right when the sidebar is open.
+ */
+html,
+body,
+.notion-frame,
+.notion-frame > div {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: clip !important;
+}
+
+.notion-page-content {
+  --theme--page_preview-padding: 0;
+  box-sizing: border-box !important;
+}
+
+.notion-peek-renderer .notion-page-content {
+  --theme--page_preview-padding: 0;
 }

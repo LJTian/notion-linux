@@ -10,7 +10,9 @@ const MAX_TAB_WIDTH = 220;
 
 const NOTION_USER_AGENT =
   process.env.NOTION_USER_AGENT ||
-  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Notion/4.2.0 Chrome/140.0.0.0 Safari/537.36";
+
+const NOTION_PRELOAD = path.join(__dirname, "notion-preload.js");
 
 let mainWindow = null;
 let tray = null;
@@ -129,7 +131,6 @@ function updateViewBounds() {
     width: Math.max(0, width - CONTENT_PADDING * 2),
     height: Math.max(0, height - TAB_BAR_HEIGHT - CONTENT_PADDING * 2)
   });
-  tab.view.setAutoResize({ width: true, height: true });
 }
 
 function setActiveTab(tabId) {
@@ -244,7 +245,8 @@ function createTab(url = START_URL) {
   const view = new BrowserView({
     webPreferences: {
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      preload: NOTION_PRELOAD
     }
   });
 
@@ -259,6 +261,7 @@ function createTab(url = START_URL) {
   attachTabEvents(tab);
 
   view.webContents.setUserAgent(NOTION_USER_AGENT);
+  view.webContents.setZoomFactor(1);
   view.webContents.loadURL(target.url);
 
   setActiveTab(id);
